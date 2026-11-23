@@ -1,0 +1,13 @@
+[Unit]
+Description=wecom-push WeCom AI Bot Long-Connection Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/wecom-push daemon run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

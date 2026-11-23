@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Publish Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run tests before release
+        run: go test -race ./...
+
+      - name: Determine GoReleaser args
+        id: goreleaser_args
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        run: |
+          if [ -n "$TAP_TOKEN" ]; then
+            echo "args=release --clean" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::HOMEBREW_TAP_GITHUB_TOKEN is not set; skipping Homebrew Tap upload. Add the secret and re-run or tag a new release to publish to Cinea4678/homebrew-tap."
+            echo "args=release --clean --skip=homebrew_casks" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: ${{ steps.goreleaser_args.outputs.args }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}

@@ -1,0 +1,16 @@
+# Binaries
+/bin/
+/dist/
+/wecom-push
+*.exe
+*.test
+*.out
+coverage.txt
+
+# Local artifacts
+.DS_Store
+*.log
+*.sock
+*.pid
+.env
+config.yaml

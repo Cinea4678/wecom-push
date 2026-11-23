@@ -1,0 +1,102 @@
+version: 2
+
+project_name: wecom-push
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: wecom-push
+    main: ./cmd/wecom-push
+    binary: wecom-push
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/Cinea4678/wecom-push/internal/version.Version={{.Version}}
+      - -X github.com/Cinea4678/wecom-push/internal/version.Commit={{.ShortCommit}}
+      - -X github.com/Cinea4678/wecom-push/internal/version.Date={{.Date}}
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+      - "Merge branch"
+
+# Homebrew distribution via Cinea4678/homebrew-tap (GoReleaser v2 standard for prebuilt binaries).
+# Install with: brew install Cinea4678/tap/wecom-push
+homebrew_casks:
+  - name: wecom-push
+    directory: Casks
+    homepage: https://github.com/Cinea4678/wecom-push
+    description: "WeCom (企业微信) AI Bot WebSocket push notification CLI & daemon"
+    license: MIT
+    skip_upload: auto
+    repository:
+      owner: Cinea4678
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_author:
+      name: github-actions[bot]
+      email: 41898282+github-actions[bot]@users.noreply.github.com
+    commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
+
+# Linux packages (.deb / .rpm / .apk) attached to GitHub Releases and ready for future APT/RPM repositories.
+# See packaging/apt/README.md for publishing these .deb files to an APT repo (GitHub Pages / Cloudsmith / Fury).
+nfpms:
+  - id: packages
+    package_name: wecom-push
+    builds:
+      - wecom-push
+    formats:
+      - deb
+      - rpm
+      - apk
+    vendor: Cinea4678
+    homepage: https://github.com/Cinea4678/wecom-push
+    maintainer: Cinea4678 <git@cinea.cc>
+    description: "WeCom (企业微信) AI Bot WebSocket push notification CLI & daemon"
+    license: MIT
+    bindir: /usr/bin
+    contents:
+      - src: packaging/systemd/wecom-push.service
+        dst: /usr/lib/systemd/user/wecom-push.service
+
+# Future APT / Cloudsmith / Gemfury publishing hook space:
+# publishers:
+#   - name: apt-repo
+#     ids: [packages]
+#     cmd: ...

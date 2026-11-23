@@ -73,6 +73,12 @@ homebrew_casks:
       name: github-actions[bot]
       email: 41898282+github-actions[bot]@users.noreply.github.com
     commit_msg_template: "Brew cask update for {{ .ProjectName }} version {{ .Tag }}"
+    hooks:
+      post:
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{ .StagedPath }}/wecom-push"]
+          end
 
 # Linux packages (.deb / .rpm / .apk) attached to GitHub Releases and ready for future APT/RPM repositories.
 # See packaging/apt/README.md for publishing these .deb files to an APT repo (GitHub Pages / Cloudsmith / Fury).
